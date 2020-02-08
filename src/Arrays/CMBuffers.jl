@@ -98,6 +98,8 @@ function prepare_stage!(buf::CMBuffer)
     if buf.transfer === nothing
         # nothing to do here
     else
+        # This could be `async=true`, since we will launch
+        # a kernel on the same stream afterwards.
         copybuffer!(buf.stage, buf.transfer, async=false)
     end
 end
@@ -147,20 +149,6 @@ end
         end
     end
 
-    # CUDAdrv.jl throws on CUDA_ERROR_NOT_READY
-    function queryStream(stream)
-        err = CUDAapi.@runtime_ccall((:cuStreamQuery, CUDAdrv.libcuda), CUDAdrv.CUresult,
-                                     (CUDAdrv.CUstream,), stream)
-
-        if err === CUDAdrv.CUDA_ERROR_NOT_READY
-            return false
-        elseif err === CUDAdrv.CUDA_SUCCESS
-            return true
-        else
-            CUDAdrv.throw_api_error(err)
-        end
-    end
-
     """
         friendlysynchronize(stream)
 
@@ -176,7 +164,7 @@ end
     function friendlysynchronize(stream)
         status = false
         while !status
-            status = queryStream(stream)
+            status = CUDAdrv.query(stream)
             MPI.Iprobe(MPI.MPI_ANY_SOURCE, MPI.MPI_ANY_TAG, MPI.COMM_WORLD)
         end
         return
@@ -184,13 +172,12 @@ end
 
     function async_copy!(A, B, N, stream)
         GC.@preserve A B begin
-            #copyto!(A, B)
             ptrA = pointer(A)
             ptrB = pointer(B)
             unsafe_copyto!(ptrA, ptrB, N, async=true, stream=stream)
         end
     end
-    function copybuffer!(A::Array, B::CuArray; async=true)
+    function _copybuffer!(A, B, async=true)
         @assert sizeof(A) == sizeof(B)
         stream = CuDefaultStream()
         async_copy!(A, B, length(A), stream)
@@ -198,14 +185,8 @@ end
             friendlysynchronize(stream)
         end
     end
-    function copybuffer!(A::CuArray, B::Array; async=true)
-        @assert sizeof(A) == sizeof(B)
-        stream = CuDefaultStream()
-        async_copy!(A, B, length(A), stream)
-        if !async
-            friendlysynchronize(stream)
-        end
-    end
+    copybuffer!(A::Array, B::CuArray; async=true) = _copybuffer!(A, B, async)
+    copybuffer!(A::CuArray, B::Array; async=true) = _copybuffer!(A, B, async)
 end
 
 end # module
