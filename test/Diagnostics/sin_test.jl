@@ -73,9 +73,11 @@ function init_sin_test!(state, aux, (x,y,z), t)
 end
 
 function config_sin_test(FT, N, resolution, xmax, ymax, zmax)
-    config = CLIMA.LES_Configuration("Diagnostics SIN test", N, resolution, xmax, ymax, zmax,
-                                     init_sin_test!,
-                                     solver_type=CLIMA.ExplicitSolverType(solver_method=LSRK54CarpenterKennedy))
+    ode_solver = CLIMA.ExplicitSolverType(solver_method=LSRK54CarpenterKennedy)
+    config = CLIMA.Atmos_LES_Configuration("Diagnostics SIN test", N,
+                                           resolution, xmax, ymax, zmax,
+                                           init_sin_test!,
+                                           solver_type=ode_solver)
 
     return config
 end
@@ -113,21 +115,18 @@ function main()
     solver = solver_config.solver
 
     outdir = mktempdir()
-    diagnostics_time_str = replace(string(now()), ":" => ".")
-    sim_time_str = string(ODESolvers.gettime(solver))
-    gather_diagnostics(mpicomm, dg, Q, diagnostics_time_str, sim_time_str,
-                       outdir, ODESolvers.gettime(solver))
+    starttime = replace(string(now()), ":" => ".")
+    Diagnostics.init(mpicomm, dg, Q, starttime, outdir)
+    Diagnostics.collect(ODESolvers.gettime(solver))
 
     CLIMA.invoke!(solver_config)
 
-    sim_time_str = string(ODESolvers.gettime(solver))
-    gather_diagnostics(mpicomm, solver_config.dg, solver_config.Q, diagnostics_time_str,
-                       sim_time_str, outdir, ODESolvers.gettime(solver))
+    Diagnostics.collect(ODESolvers.gettime(solver_config.solver))
 
     # Check results
     mpirank = MPI.Comm_rank(mpicomm)
     if mpirank == 0
-        d = load(joinpath(outdir, "diagnostics-$(diagnostics_time_str).jld2"))
+        d = load(joinpath(outdir, "diagnostics-$(starttime).jld2"))
         Nqk  = size(d["0.0"], 1)
         Nev  = size(d["0.0"], 2)
         S    = zeros(Nqk * Nev)
