@@ -320,7 +320,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     model = AtmosModel{FT}(AtmosLESConfiguration;
                            ref_state=ref_state,
                           turbulence=SmagorinskyLilly{FT}(C_smag),
-                            moisture=EquilMoist(maxiter=5),
+                            moisture=EquilMoist{FT}(;maxiter=5),
                            radiation=radiation,
                           subsidence=ConstantSubsidence{FT}(D_subsidence),
                               source=source,
