@@ -18,7 +18,11 @@ import CLIMA.DGmethods: BalanceLaw, vars_aux, vars_state, vars_gradient,
                         update_aux!, indefinite_stack_integral!,
                         reverse_indefinite_stack_integral!,  boundary_state!,
                         gradvariables!, init_aux!, init_state!,
-                        init_ode_state, LocalGeometry
+                        init_ode_state, LocalGeometry,
+                        integrate_set_aux!,
+                        vars_reverse_integrals,
+                        reverse_integral_load_aux!,
+                        reverse_integral_set_aux!
 
 
 struct IntegralTestSphereModel{T} <: BalanceLaw
@@ -34,6 +38,7 @@ function update_aux!(dg::DGModel, m::IntegralTestSphereModel, Q::MPIStateArray, 
 end
 
 vars_integrals(::IntegralTestSphereModel, T) = @vars(v::T)
+vars_reverse_integrals(::IntegralTestSphereModel, T) = @vars(v::T)
 vars_aux(m::IntegralTestSphereModel,T) = @vars(int::vars_integrals(m,T), rev_int::vars_integrals(m,T), r::T, a::T)
 
 vars_state(::IntegralTestSphereModel, T) = @vars()
@@ -60,6 +65,23 @@ end
 
 @inline function integrate_aux!(m::IntegralTestSphereModel, integrand::Vars, state::Vars, aux::Vars)
   integrand.v = -2aux.r * aux.a * exp(-aux.a * aux.r^2)
+end
+
+@inline function integrate_set_aux!(m::IntegralTestSphereModel, aux::Vars,
+                                    integral::Vars)
+  aux.int.v = integral.v
+end
+
+@inline function reverse_integral_load_aux!(m::IntegralTestSphereModel,
+                                            integral::Vars,
+                                            aux::Vars)
+  integral.v = aux.int.v
+end
+
+@inline function reverse_integral_set_aux!(m::IntegralTestSphereModel,
+                                           aux::Vars,
+                                           integral::Vars)
+  aux.rev_int.v = integral.v
 end
 
 if !@isdefined integration_testing
