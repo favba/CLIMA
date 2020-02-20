@@ -19,6 +19,8 @@ using ..MPIStateArrays
 using ..DGmethods: update_aux!, update_aux_diffusive!
 using ..TicToc
 
+import CLIMA.Atmos: vars_state, vars_aux, vars_diffusive, flattenednames
+
 Base.@kwdef mutable struct CLIMA_Settings
     disable_gpu::Bool = false
     mpi_knows_cuda::Bool = false
@@ -225,7 +227,7 @@ function setup_solver(t0::FT, timeend::FT,
 
     # create DG model, initialize ODE state
     dg = DGModel(bl, grid, numfluxnondiff, numfluxdiff, gradnumflux,
-                 modeldata=modeldata)
+                 modeldata=modeldata, diffusion_direction=EveryDirection())
     @info @sprintf("Initializing %s", driver_config.name)
     Q = init_ode_state(dg, FT(0), init_args...; forcecpu=forcecpu)
 

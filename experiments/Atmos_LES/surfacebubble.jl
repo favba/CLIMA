@@ -65,9 +65,9 @@ function atmos_boundary_flux_diffusive!(nf::CentralNumericalFluxDiffusive,
                                         bc::SurfaceDrivenBubbleBC,
                                         m::AtmosModel,
                                         F,
-                                        Y⁺::Vars, Σ⁺::Vars, A⁺::Vars,
+                                        Y⁺::Vars, Σ⁺::Vars, HD⁺::Vars, A⁺::Vars,
                                         n⁻,
-                                        Y⁻::Vars, Σ⁻::Vars, A⁻::Vars,
+                                        Y⁻::Vars, Σ⁻::Vars, HD⁻::Vars, A⁻::Vars,
                                         bctype, t, Y₁⁻, Σ₁⁻, A₁⁻)
   # Working precision
   FT = eltype(Y⁻)
@@ -82,9 +82,9 @@ function atmos_boundary_flux_diffusive!(nf::CentralNumericalFluxDiffusive,
   # Apply boundary condition per face (1 == bottom wall)
   if bctype != 1
     atmos_boundary_flux_diffusive!(nf, NoFluxBC(), m, F,
-                                   Y⁺, Σ⁺, A⁺,
+                                   Y⁺, Σ⁺, HD⁺, A⁺,
                                    n⁻,
-                                   Y⁻, Σ⁻, A⁻,
+                                   Y⁻, Σ⁻, HD⁻, A⁻,
                                    bctype, t,
                                    Y₁⁻, Σ₁⁻, A₁⁻)
   else
@@ -98,6 +98,21 @@ function atmos_boundary_flux_diffusive!(nf::CentralNumericalFluxDiffusive,
     _,τ⁺ = turbulence_tensors(m.turbulence, Y⁺, Σ⁺, A⁺, t)
     flux_diffusive!(m, F, Y⁺, τ⁺, ∇h_tot⁺)
   end
+end
+
+function atmos_boundary_flux_diffusive!(nf::CentralHyperDiffusiveFlux,
+                                        bc::SurfaceDrivenBubbleBC,
+                                        atmos::AtmosModel,
+                                        F,
+                                        Y⁺, Σ⁺, HΣ⁺, A⁺, n⁻,
+                                        Y⁻, Σ⁻, HΣ⁻, A⁻,
+                                        bctype, t, Y₁⁻, Σ₁⁻, A₁⁻)
+  atmos_boundary_state!(nf, bc, atmos,
+                        Y⁺, Σ⁺,HΣ⁺, A⁺, n⁻,
+                        Y⁻, Σ⁻,HΣ⁻, A⁻,
+                        bctype, t,
+                        Y₁⁻, Σ₁⁻, A₁⁻)
+  flux_diffusive!(atmos, F, Y⁺, Σ⁺, HΣ⁺, A⁺, t)
 end
 
 """
@@ -152,6 +167,7 @@ function config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
 
   model = AtmosModel{FT}(AtmosLESConfiguration;
                          turbulence=SmagorinskyLilly{FT}(C_smag),
+                         hyperdiffusion=HorizontalHyperDiffusion{FT}(30),
                          source=(Gravity(),),
                          boundarycondition=bc,
                          moisture=EquilMoist(),

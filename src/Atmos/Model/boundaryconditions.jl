@@ -5,15 +5,30 @@ function atmos_boundary_flux_diffusive!(nf::NumericalFluxDiffusive,
                                         bc,
                                         atmos::AtmosModel,
                                         F,
-                                        state⁺, diff⁺, aux⁺, n⁻,
-                                        state⁻, diff⁻, aux⁻,
+                                        state⁺, diff⁺, hyperdiff⁺, aux⁺, n⁻,
+                                        state⁻, diff⁻, hyperdiff⁻, aux⁻,
                                         bctype, t, state1⁻, diff1⁻, aux1⁻)
   atmos_boundary_state!(nf, bc, atmos,
                         state⁺, diff⁺, aux⁺, n⁻,
                         state⁻, diff⁻, aux⁻,
                         bctype, t,
                         state1⁻, diff1⁻, aux1⁻)
-  flux_diffusive!(atmos, F, state⁺, diff⁺, aux⁺, t)
+  flux_diffusive!(atmos, F, state⁺, diff⁺, hyperdiff⁺, aux⁺, t)
+end
+
+function atmos_boundary_flux_diffusive!(nf::CentralHyperDiffusiveFlux,
+                                        bc,
+                                        atmos::AtmosModel,
+                                        F,
+                                        state⁺, diff⁺, hyperdiff⁺, aux⁺, n⁻,
+                                        state⁻, diff⁻, hyperdiff⁻, aux⁻,
+                                        bctype, t, state1⁻, diff1⁻, aux1⁻)
+  atmos_boundary_state!(nf, bc, atmos,
+                        state⁺, diff⁺,hyperdiff⁺, aux⁺, n⁻,
+                        state⁻, diff⁻,hyperdiff⁻, aux⁻,
+                        bctype, t,
+                        state1⁻, diff1⁻, aux1⁻)
+  flux_diffusive!(atmos, F, state⁺, diff⁺, hyperdiff⁺, aux⁺, t)
 end
 
 #TODO: figure out a better interface for this.
@@ -27,14 +42,21 @@ function atmos_boundary_state!(::Union{NumericalFluxNonDiffusive, NumericalFluxG
 end
 
 function atmos_boundary_state!(::NumericalFluxDiffusive, f::Function,
-                               m::AtmosModel, state⁺::Vars, diff⁺::Vars,
-                               aux⁺::Vars, n⁻, state⁻::Vars, diff⁻::Vars,
+                               m::AtmosModel, state⁺::Vars, diff⁺::Vars, hyperdiff⁺,
+                               aux⁺::Vars, n⁻, state⁻::Vars, diff⁻::Vars, hyperdiff⁻,
+                               aux⁻::Vars, bctype, t, _...)
+  f(state⁺, diff⁺, aux⁺, n⁻, state⁻, diff⁻, aux⁻, bctype, t)
+end
+
+function atmos_boundary_state!(::CentralHyperDiffusiveFlux, f::Function,
+                               m::AtmosModel, state⁺::Vars, diff⁺::Vars, hyperdiff⁺,
+                               aux⁺::Vars, n⁻, state⁻::Vars, diff⁻::Vars, hyperdiff⁻,
                                aux⁻::Vars, bctype, t, _...)
   f(state⁺, diff⁺, aux⁺, n⁻, state⁻, diff⁻, aux⁻, bctype, t)
 end
 
 # lookup boundary condition by face
-function atmos_boundary_state!(nf::Union{NumericalFluxNonDiffusive, NumericalFluxGradient},
+function atmos_boundary_state!(nf::Union{NumericalFluxNonDiffusive, NumericalFluxGradient, CentralDivPenalty},
                                bctup::Tuple, m::AtmosModel, state⁺::Vars,
                                aux⁺::Vars, n⁻, state⁻::Vars, aux⁻::Vars, bctype,
                                t, _...)
@@ -43,6 +65,21 @@ function atmos_boundary_state!(nf::Union{NumericalFluxNonDiffusive, NumericalFlu
 end
 
 function atmos_boundary_state!(nf::NumericalFluxDiffusive,
+                               bctup::Tuple, m::AtmosModel, state⁺::Vars,
+                               diff⁺::Vars, aux⁺::Vars, n⁻, state⁻::Vars,
+                               diff⁻::Vars, aux⁻::Vars, bctype, t, _...)
+  atmos_boundary_state!(nf, bctup[bctype], m, state⁺, diff⁺, aux⁺, n⁻, state⁻,
+                        diff⁻, aux⁻, bctype, t)
+end
+
+function atmos_boundary_state!(nf::CentralHyperDiffusiveFlux,
+                               bctup::Tuple, m::AtmosModel, state⁺::Vars,
+                               diff⁺::Vars, aux⁺::Vars, n⁻, state⁻::Vars,
+                               diff⁻::Vars, aux⁻::Vars, bctype, t, _...)
+  atmos_boundary_state!(nf, bctup[bctype], m, state⁺, diff⁺, aux⁺, n⁻, state⁻,
+                        diff⁻, aux⁻, bctype, t)
+end
+function atmos_boundary_state!(nf::CentralDivPenalty,
                                bctup::Tuple, m::AtmosModel, state⁺::Vars,
                                diff⁺::Vars, aux⁺::Vars, n⁻, state⁻::Vars,
                                diff⁻::Vars, aux⁻::Vars, bctype, t, _...)
@@ -62,6 +99,7 @@ struct PeriodicBC <: BoundaryCondition end
 
 # TODO: assert somewhere that the topology is actually periodic when using those
 atmos_boundary_state!(_, ::PeriodicBC, _...) = nothing
+atmos_boundary_flux_diffusive!(_, ::PeriodicBC, _...) = nothing
 
 """
     NoFluxBC <: BoundaryCondition

@@ -73,15 +73,15 @@ When `bctype == 1` the `NoFluxBC` otherwise the specialized DYCOMS BC is used
 function atmos_boundary_flux_diffusive!(nf::CentralNumericalFluxDiffusive,
                                         bc::DYCOMS_BC, 
                                         atmos::AtmosModel, F,
-                                        state⁺, diff⁺, aux⁺, 
+                                        state⁺, diff⁺, hyperdiff⁺, aux⁺,
                                         n⁻,
-                                        state⁻, diff⁻, aux⁻,
+                                        state⁻, diff⁻, hyperdiff⁻, aux⁻,
                                         bctype, t,
                                         state1⁻, diff1⁻, aux1⁻)
   if bctype != 1
     atmos_boundary_flux_diffusive!(nf, NoFluxBC(), atmos, F,
-                                   state⁺, diff⁺, aux⁺, n⁻,
-                                   state⁻, diff⁻, aux⁻,
+                                   state⁺, diff⁺, hyperdiff⁺, aux⁺, n⁻,
+                                   state⁻, diff⁻, hyperdiff⁻, aux⁻,
                                    bctype, t,
                                    state1⁻, diff1⁻, aux1⁻)
   else
@@ -315,6 +315,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     ics = init_dycoms!
     source = (Gravity(),
               rayleigh_sponge,
+              Subsidence{FT}(D_subsidence),
               geostrophic_forcing)
 
     model = AtmosModel{FT}(AtmosLESConfiguration;
@@ -322,7 +323,6 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
                           turbulence=SmagorinskyLilly{FT}(C_smag),
                             moisture=EquilMoist(5),
                            radiation=radiation,
-                          subsidence=ConstantSubsidence{FT}(D_subsidence),
                               source=source,
                    boundarycondition=bc,
                           init_state=ics)

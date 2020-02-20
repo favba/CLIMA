@@ -347,7 +347,7 @@ this computation is done pointwise at each nodal point
 ∂ᵗθ = -∇∘(κ∇θ)
 """
 @inline function flux_diffusive!(m::HBModel, F::Grad, Q::Vars, D::Vars,
-                                 A::Vars, t::Real)
+                                 HD::Vars, A::Vars, t::Real)
   F.u -= Diagonal(A.ν) * D.∇u
   F.θ -= Diagonal(A.κ) * D.∇θ
 
@@ -370,8 +370,8 @@ end
     ∂ᵗu = -f×u
     ∂ᵗη = w|(z=0)
 """
-@inline function source!(m::HBModel{P}, source::Vars, Q::Vars, A::Vars,
-                         t::Real) where P
+@inline function source!(m::HBModel{P}, source::Vars, Q::Vars,
+                         diffusive::Vars, A::Vars, t::Real) where P
   @inbounds begin
     u,v = Q.u # Horizontal components of velocity
     f = A.f
