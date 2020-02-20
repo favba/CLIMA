@@ -54,7 +54,7 @@ function soundspeed(m::MMSDryModel, orientation::Orientation, state::Vars, aux::
   sqrt(ρinv * γ * p)
 end
 
-function mms2_init_state!(state::Vars, aux::Vars, (x1,x2,x3), t)
+function mms2_init_state!(bl, state::Vars, aux::Vars, (x1,x2,x3), t)
   state.ρ = ρ_g(t, x1, x2, x3, Val(2))
   state.ρu = SVector(U_g(t, x1, x2, x3, Val(2)),
                      V_g(t, x1, x2, x3, Val(2)),
@@ -62,7 +62,7 @@ function mms2_init_state!(state::Vars, aux::Vars, (x1,x2,x3), t)
   state.ρe = E_g(t, x1, x2, x3, Val(2))
 end
 
-function mms2_source!(source::Vars, state::Vars, aux::Vars, t::Real)
+function mms2_source!(bl, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
   x1,x2,x3 = aux.coord
   source.ρ  = Sρ_g(t, x1, x2, x3, Val(2))
   source.ρu = SVector(SU_g(t, x1, x2, x3, Val(2)),
@@ -71,7 +71,7 @@ function mms2_source!(source::Vars, state::Vars, aux::Vars, t::Real)
   source.ρe = SE_g(t, x1, x2, x3, Val(2))
 end
 
-function mms3_init_state!(state::Vars, aux::Vars, (x1,x2,x3), t)
+function mms3_init_state!(bl, state::Vars, aux::Vars, (x1,x2,x3), t)
   state.ρ = ρ_g(t, x1, x2, x3, Val(3))
   state.ρu = SVector(U_g(t, x1, x2, x3, Val(3)),
                      V_g(t, x1, x2, x3, Val(3)),
@@ -79,7 +79,7 @@ function mms3_init_state!(state::Vars, aux::Vars, (x1,x2,x3), t)
   state.ρe = E_g(t, x1, x2, x3, Val(3))
 end
 
-function mms3_source!(source::Vars, state::Vars, aux::Vars, t::Real)
+function mms3_source!(bl, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
   x1,x2,x3 = aux.coord
   source.ρ  = Sρ_g(t, x1, x2, x3, Val(3))
   source.ρu = SVector(SU_g(t, x1, x2, x3, Val(3)),
@@ -188,8 +188,8 @@ let
   polynomialorder = 4
   base_num_elem = 4
 
-  expected_result = [1.5834569096502649e-01 5.3705043093160857e-03 2.2780398026991879e-04;
-                     2.6050771352440709e-02 1.1953830539519587e-03 6.2139835471113376e-05]
+  expected_result = [1.6931876910307017e-01 5.4603193051929394e-03 2.3307776694542282e-04;
+                     3.3983777728925593e-02 1.7808380837573065e-03 9.176181458773599e-5]
   lvls = integration_testing ? size(expected_result, 2) : 1
 
   @testset "mms_bc_atmos" begin
