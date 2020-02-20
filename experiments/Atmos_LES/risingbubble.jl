@@ -6,6 +6,7 @@ using CLIMA
 using CLIMA.Atmos
 using CLIMA.GenericCallbacks
 using CLIMA.LowStorageRungeKuttaMethod
+using CLIMA.MultirateRungeKuttaMethod
 using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters
@@ -120,8 +121,8 @@ function main()
 
     # Invoke solver (calls solve! function for time-integrator)
     result = CLIMA.invoke!(solver_config;
-                          user_callbacks=(cbtmarfilter,),
-                          check_euclidean_distance=true)
+                           user_callbacks=(cbtmarfilter,),
+                           check_euclidean_distance=true)
 
     @test isapprox(result,FT(1); atol=1.5e-3)
 end
