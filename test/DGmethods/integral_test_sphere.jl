@@ -13,13 +13,13 @@ using Logging
 using GPUifyLoops
 
 import CLIMA.DGmethods: BalanceLaw, vars_aux, vars_state, vars_gradient,
-                        vars_diffusive, vars_integrals, integrate_aux!,
+                        vars_diffusive, vars_integrals, integral_load_aux!,
                         flux_nondiffusive!, flux_diffusive!, source!, wavespeed,
                         update_aux!, indefinite_stack_integral!,
                         reverse_indefinite_stack_integral!,  boundary_state!,
                         gradvariables!, init_aux!, init_state!,
                         init_ode_state, LocalGeometry,
-                        integrate_set_aux!,
+                        integral_set_aux!,
                         vars_reverse_integrals,
                         reverse_integral_load_aux!,
                         reverse_integral_set_aux!
@@ -63,11 +63,11 @@ function init_aux!(m::IntegralTestSphereModel, aux::Vars, g::LocalGeometry)
   aux.rev_int.v = exp(-aux.a * m.Router^2) - exp(-aux.a * aux.r^2)
 end
 
-@inline function integrate_aux!(m::IntegralTestSphereModel, integrand::Vars, state::Vars, aux::Vars)
+@inline function integral_load_aux!(m::IntegralTestSphereModel, integrand::Vars, state::Vars, aux::Vars)
   integrand.v = -2aux.r * aux.a * exp(-aux.a * aux.r^2)
 end
 
-@inline function integrate_set_aux!(m::IntegralTestSphereModel, aux::Vars,
+@inline function integral_set_aux!(m::IntegralTestSphereModel, aux::Vars,
                                     integral::Vars)
   aux.int.v = integral.v
 end

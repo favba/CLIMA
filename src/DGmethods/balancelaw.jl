@@ -46,8 +46,8 @@ num_integrals(m::BalanceLaw, FT) = varsize(vars_integrals(m,FT))
 num_reverse_integrals(m::BalanceLaw, FT) = varsize(vars_reverse_integrals(m,FT))
 
 function update_aux! end
-function integrate_aux! end
-function integrate_set_aux! end
+function integral_load_aux! end
+function integral_set_aux! end
 function reverse_integral_load_aux! end
 function reverse_integral_set_aux! end
 function flux_nondiffusive! end

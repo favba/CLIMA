@@ -1086,7 +1086,7 @@ function knl_indefinite_stack_integral!(bl::BalanceLaw, ::Val{dim}, ::Val{N},
               l_aux[s] = auxstate[ijk, s, e]
             end
 
-            integrate_aux!(bl, Vars{vars_integrals(bl, FT)}(view(l_knl, :, k)),
+            integral_load_aux!(bl, Vars{vars_integrals(bl, FT)}(view(l_knl, :, k)),
               Vars{vars_state(bl, FT)}(l_Q), Vars{vars_aux(bl,FT)}(l_aux))
 
             # multiply in the curve jacobian
@@ -1110,7 +1110,7 @@ function knl_indefinite_stack_integral!(bl::BalanceLaw, ::Val{dim}, ::Val{N},
               l_knl[s, k] = l_int[s, k, i, j]
             end
             ijk = i + Nq * ((j-1) + Nqj * (k-1))
-            integrate_set_aux!(bl,
+            integral_set_aux!(bl,
                                Vars{vars_aux(bl, FT)}(view(auxstate, ijk, :, e)),
                                Vars{vars_integrals(bl, FT)}(view(l_knl, :, k)))
             @unroll for ind_out = 1:nout
