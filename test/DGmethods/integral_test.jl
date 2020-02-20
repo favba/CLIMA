@@ -18,12 +18,16 @@ import CLIMA.DGmethods: BalanceLaw, vars_aux, vars_state, vars_gradient,
                         update_aux!, indefinite_stack_integral!,
                         reverse_indefinite_stack_integral!,  boundary_state!,
                         init_aux!, init_state!, init_ode_state,
-                        LocalGeometry
+                        LocalGeometry, integrate_set_aux!,
+                        vars_reverse_integrals,
+                        reverse_integral_load_aux!,
+                        reverse_integral_set_aux!
 
 
 struct IntegralTestModel{dim} <: BalanceLaw
 end
 
+vars_reverse_integrals(::IntegralTestModel, T) = @vars(a::T,b::T)
 vars_integrals(::IntegralTestModel, T) = @vars(a::T,b::T)
 vars_aux(m::IntegralTestModel,T) = @vars(int::vars_integrals(m,T),
                                          rev_int::vars_reverse_integrals(m,T),
@@ -76,7 +80,23 @@ end
   integrand.b = 2*x + sin(x)*y - (z-1)^2*y^2
 end
 
+@inline function integrate_set_aux!(m::IntegralTestModel, aux::Vars,
+                                    integral::Vars)
+  aux.int.a = integral.a
+  aux.int.b = integral.b
+end
 
+@inline function reverse_integral_load_aux!(m::IntegralTestModel, integral::Vars,
+                                            aux::Vars)
+  integral.a = aux.int.a
+  integral.b = aux.int.b
+end
+
+@inline function reverse_integral_set_aux!(m::IntegralTestModel, aux::Vars,
+                                           integral::Vars)
+  aux.rev_int.a = integral.a
+  aux.rev_int.b = integral.b
+end
 
 using Test
 function run(mpicomm, dim, Ne, N, FT, ArrayType)
