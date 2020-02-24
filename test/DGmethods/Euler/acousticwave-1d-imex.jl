@@ -187,7 +187,7 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
   r = norm(coords, 2)
   @inbounds λ = atan(coords[2], coords[1])
   @inbounds φ = asin(coords[3] / r)
-  h = r - FT(planet_radius)
+  h = altitude(bl.orientation, aux)
 
   β = min(FT(1), setup.α * acos(cos(φ) * cos(λ)))
   f = (1 + cos(FT(π) * β)) / 2
@@ -195,9 +195,14 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
   Δp = setup.γ * f * g
   p = aux.ref_state.p + Δp
 
-  state.ρ = air_density(setup.T_ref, p)
+  ts       = PhaseDry_given_pT(p, setup.T_ref)
+  q_pt     = PhasePartition(ts)
+  e_pot    = gravitational_potential(bl.orientation, aux)
+  e_int    = internal_energy(ts)
+
+  state.ρ  = air_density(ts)
   state.ρu = SVector{3, FT}(0, 0, 0)
-  state.ρe = state.ρ * (internal_energy(setup.T_ref) + aux.orientation.Φ)
+  state.ρe = state.ρ * (e_int + e_pot)
   nothing
 end
 
