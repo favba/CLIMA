@@ -35,7 +35,7 @@ struct IMEXSolverType <: AbstractSolverType
 end
 
 struct MRRKSolverType <: AbstractSolverType
-    solver_method::Function
+    solver_method::Type
     fast_method::Function
     slow_method::Function
     linear_model::Type
