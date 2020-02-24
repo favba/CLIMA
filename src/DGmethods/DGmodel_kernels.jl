@@ -1126,7 +1126,8 @@ end
 
 function knl_reverse_indefinite_stack_integral!(bl::BalanceLaw,
                                                 ::Val{dim}, ::Val{N},
-                                                ::Val{nvertelem}, auxstate,
+                                                ::Val{nvertelem},
+                                                state, auxstate,
                                                 elems
                                                ) where {dim, N, nvertelem}
   FT = eltype(auxstate)
@@ -1148,6 +1149,7 @@ function knl_reverse_indefinite_stack_integral!(bl::BalanceLaw,
         et = nvertelem + (eh - 1) * nvertelem
         reverse_integral_load_aux!(bl,
                                    Vars{vars_reverse_integrals(bl, FT)}(l_T),
+                                   Vars{vars_state(bl, FT)}(view(state, ijk, :, et)),
                                    Vars{vars_aux(bl, FT)}(view(auxstate, ijk, :, et)))
 
         # Loop up the stack of elements
@@ -1157,6 +1159,7 @@ function knl_reverse_indefinite_stack_integral!(bl::BalanceLaw,
             ijk = i + Nq * ((j-1) + Nqj * (k-1))
             reverse_integral_load_aux!(bl,
                                        Vars{vars_reverse_integrals(bl, FT)}(l_V),
+                                       Vars{vars_state(bl, FT)}(view(state, ijk, :, et)),
                                        Vars{vars_aux(bl, FT)}(view(auxstate, ijk, :, e)))
             l_V .= l_T .- l_V
             reverse_integral_set_aux!(bl,
