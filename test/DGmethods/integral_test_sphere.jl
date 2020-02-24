@@ -32,7 +32,7 @@ end
 
 function update_aux!(dg::DGModel, m::IntegralTestSphereModel, Q::MPIStateArray, t::Real)
   indefinite_stack_integral!(dg, m, Q, dg.auxstate, t)
-  reverse_indefinite_stack_integral!(dg, m, dg.auxstate, t)
+  reverse_indefinite_stack_integral!(dg, m, Q, dg.auxstate, t)
 
   return true
 end
@@ -74,6 +74,7 @@ end
 
 @inline function reverse_integral_load_aux!(m::IntegralTestSphereModel,
                                             integral::Vars,
+                                            state::Vars,
                                             aux::Vars)
   integral.v = aux.int.v
 end

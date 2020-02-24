@@ -322,7 +322,7 @@ m -> model in this case HBModel
 I -> array of integrand variables
 A -> array of aux variables
 """
-@inline function reverse_integral_load_aux!(m::HBModel, I::Vars, A::Vars)
+@inline function reverse_integral_load_aux!(m::HBModel, I::Vars, Q::Vars, A::Vars)
   I.αᵀθ = A.pkin
 
   return nothing
@@ -521,7 +521,7 @@ function update_aux_diffusive!(dg::DGModel, m::HBModel, Q::MPIStateArray, t::Rea
 
   # compute integrals for w and pkin
   indefinite_stack_integral!(dg, m, Q, A, t) # bottom -> top
-  reverse_indefinite_stack_integral!(dg, m, A, t) # top -> bottom
+  reverse_indefinite_stack_integral!(dg, m, Q, A, t) # top -> bottom
 
   # project w(z=0) down the stack
   # Need to be consistent with vars_aux
