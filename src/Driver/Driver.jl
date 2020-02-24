@@ -264,9 +264,9 @@ function setup_solver(t0::FT, timeend::FT,
         slow_model = RemainderModel(bl, (linmodel,))
         slow_dg = DGModel(slow_model, grid, numfluxnondiff, numfluxdiff, gradnumflux,
                           auxstate=dg.auxstate)
-        slow_solver = solver_type.slow_solver(slow_dg, Q; dt=dt)
+        slow_solver = solver_type.slow_method(slow_dg, Q; dt=dt)
         fast_dt = dt / 10.0
-        fast_solver = solver_type.fast_solver(fast_dg, Q; dt=fast_dt)
+        fast_solver = solver_type.fast_method(fast_dg, Q; dt=fast_dt)
         solver = solver_type.solver_method((slow_solver, fast_solver))
     else # solver_type === IMEXSolverType
         vdg = DGModel(linmodel, grid, numfluxnondiff, numfluxdiff, gradnumflux,
