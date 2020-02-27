@@ -7,8 +7,7 @@ using Printf
 using CLIMA
 using CLIMA.Atmos
 using CLIMA.GenericCallbacks
-using CLIMA.LowStorageRungeKuttaMethod
-using CLIMA.MultirateRungeKuttaMethod
+using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters
