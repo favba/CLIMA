@@ -13,6 +13,10 @@ using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters
 using CLIMA.VariableTemplates
+using CLIMA.Courant
+import CLIMA.DGmethods
+
+const DG = CLIMA.DGmethods
 
 # ------------------------ Description ------------------------- #
 # 1) Dry Rising Bubble (circular potential temperature perturbation)
@@ -125,10 +129,24 @@ function main()
         nothing
     end
 
+    show_cfl_numbers = GenericCallbacks.EveryXSimulationSteps(20) do
+        dg =  solver_config.dg
+        m = dg.balancelaw
+        Q = solver_config.Q
+        Δt = solver_config.dt
+        cfl_v = DG.courant(nondiffusive_courant, dg, m, Q, Δt, CLIMA.Grids.VerticalDirection())
+        cfl_h = DG.courant(nondiffusive_courant, dg, m, Q, Δt, CLIMA.Grids.HorizontalDirection())
+        cfla_v = DG.courant(advective_courant, dg, m, Q, Δt, CLIMA.Grids.VerticalDirection())
+        cfla_h = DG.courant(advective_courant, dg, m, Q, Δt, CLIMA.Grids.HorizontalDirection())
+
+        @info "CFL Numbers\nVertical Acoustic CFL    = $(cfl_v)\nHorizontal Acoustic CFL  = $(cfl_h)\nVertical Advection CFL   = $(cfla_v)\nHorizontal Advection CFL = $(cfla_h)"
+        return nothing
+    end
+
     # Invoke solver (calls solve! function for time-integrator)
     starttime = Base.time()
     result = CLIMA.invoke!(solver_config;
-                           user_callbacks=(cbtmarfilter,),
+                           user_callbacks=(cbtmarfilter,show_cfl_numbers),
                            check_euclidean_distance=true)
     endtime = Base.time()
     @info @sprintf("""FINISHED. Runtime = %s""", endtime - starttime)
