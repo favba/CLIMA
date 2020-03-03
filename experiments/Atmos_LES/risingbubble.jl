@@ -13,16 +13,10 @@ using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters
 using CLIMA.VariableTemplates
 using CLIMA.Courant
-<<<<<<< HEAD
-import CLIMA.DGmethods
-
-const DG = CLIMA.DGmethods
-=======
 using Printf
 
 import CLIMA.DGmethods: courant
 import CLIMA.Grids: VerticalDirection, HorizontalDirection
->>>>>>> 9938caf1
 
 # ------------------------ Description ------------------------- #
 # 1) Dry Rising Bubble (circular potential temperature perturbation)
@@ -140,17 +134,16 @@ function main()
         Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
         nothing
     end
-
-        cfl_h = DG.courant(nondiffusive_courant, dg, m, Q, Δt, CLIMA.Grids.HorizontalDirection())
-        cfla_h = DG.courant(advective_courant, dg, m, Q, Δt, CLIMA.Grids.HorizontalDirection())
-
-        @info "CFL Numbers\nVertical Acoustic CFL    = $(cfl_v)\nHorizontal Acoustic CFL  = $(cfl_h)\nVertical Advection CFL   = $(cfla_v)\nHorizontal Advection CFL = $(cfla_h)"
+    
+    cbcourantnumbers = GenericCallbacks.EveryXSimulationSteps(5) do
+        dg =  solver_config.dg
+        m = dg.balancelaw
+        Q = solver_config.Q
+        Δt = solver_config.dt
         cfl_v = courant(nondiffusive_courant, dg, m, Q, Δt, VerticalDirection())
         cfl_h = courant(nondiffusive_courant, dg, m, Q, Δt, HorizontalDirection())
         cfla_v = courant(advective_courant, dg, m, Q, Δt, VerticalDirection())
         cfla_h = courant(advective_courant, dg, m, Q, Δt, HorizontalDirection())
-        #cfld_v = courant(diffusive_courant, dg, m, Q, Δt, VerticalDirection())
-        #cfld_h = courant(diffusive_courant, dg, m, Q, Δt, HorizontalDirection())
 
         fΔt = solver_config.solver.fast_solver.dt
         cflin_v = courant(nondiffusive_courant, dg, m, Q, fΔt, VerticalDirection())
@@ -170,7 +163,6 @@ function main()
         Horizontal Acoustic CFL  = %.2g
         Vertical Advection CFL   = %.2g
         Horizontal Advection CFL = %.2g
-
         """  cfl_v cfl_h cfla_v cfla_h cflin_v cflin_h cflain_v cflain_h
         return nothing
     end
