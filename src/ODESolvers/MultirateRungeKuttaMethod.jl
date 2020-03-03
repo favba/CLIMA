@@ -1,6 +1,8 @@
 
 include("MultirateRungeKuttaMethod_kernels.jl")
 
+using Printf
+
 export MultirateRungeKutta
 
 LSRK2N = LowStorageRungeKutta2N
@@ -108,7 +110,9 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
   threads = 256
   blocks = div(length(realview(Q)) + threads - 1, threads)
 
+  substep_acc = 0
   for slow_s = 1:length(slow.RKA)
+    println("Slow stage index = $(slow_s)\n")
     # Currnent slow state time
     slow_stage_time = time + slow.RKC[slow_s] * dt
 
@@ -131,6 +135,7 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
     else
       γ = slow.RKC[slow_s + 1] - slow.RKC[slow_s]
     end
+    println("Fractional time multiplier = $(γ)\n")
 
     # RKB for the slow with fractional time factor remove (since full
     # integration of fast will result in scaling by γ)
@@ -140,8 +145,10 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
     # integration of fast will result in scaling by γ)
     nsubsteps = getdt(fast) > 0 ? ceil(Int, γ * dt / getdt(fast)) : 1
     fast_dt = γ * dt / nsubsteps
-
+    println("fast_dt = $(fast_dt)\n")
+    println("nsubsteps = $(nsubsteps)\n")
     for substep = 1:nsubsteps
+      substep_acc += 1
       slow_rka = nothing
       if substep == nsubsteps
         slow_rka = slow.RKA[slow_s%length(slow.RKA) + 1]
@@ -149,7 +156,7 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
       fast_time = slow_stage_time + (substep - 1) * fast_dt
       dostep!(Q, fast, param, fast_time, fast_dt, slow_δ, slow_rv_dQ,
                    slow_rka)
+      # println("Substep counter = $(substep_acc)\n")
     end
   end
 end
-
