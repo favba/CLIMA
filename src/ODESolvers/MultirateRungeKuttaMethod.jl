@@ -112,7 +112,7 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
 
   substep_acc = 0
   for slow_s = 1:length(slow.RKA)
-    println("Slow stage index = $(slow_s)\n")
+    #println("Slow stage index = $(slow_s)\n")
     # Currnent slow state time
     slow_stage_time = time + slow.RKC[slow_s] * dt
 
@@ -135,7 +135,7 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
     else
       γ = slow.RKC[slow_s + 1] - slow.RKC[slow_s]
     end
-    println("Fractional time multiplier = $(γ)\n")
+    #println("Fractional time multiplier = $(γ)\n")
 
     # RKB for the slow with fractional time factor remove (since full
     # integration of fast will result in scaling by γ)
@@ -145,8 +145,8 @@ function dostep!(Q, mrrk::MultirateRungeKutta{SS}, param,
     # integration of fast will result in scaling by γ)
     nsubsteps = getdt(fast) > 0 ? ceil(Int, γ * dt / getdt(fast)) : 1
     fast_dt = γ * dt / nsubsteps
-    println("fast_dt = $(fast_dt)\n")
-    println("nsubsteps = $(nsubsteps)\n")
+    #println("fast_dt = $(fast_dt)\n")
+    #println("nsubsteps = $(nsubsteps)\n")
     for substep = 1:nsubsteps
       substep_acc += 1
       slow_rka = nothing
